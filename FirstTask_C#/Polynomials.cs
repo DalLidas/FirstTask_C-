@@ -1,12 +1,23 @@
-﻿using System.Linq.Expressions;
-using System.Numerics;
-using System.Runtime.InteropServices;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-using Polynomials;
-using static Interfaces.Interfaces;
+namespace Polynomials
+{
+    /// <summary>
+    /// Class for work with equation of the form mult*x^pow
+    /// </summary>
+    public class Monomial
+    {
+        public double mult { get; set; }
+        public int pow { get; set; }
 
+        public Monomial() { this.mult = 0; this.pow = 0; }
+        public Monomial(double mult) { this.mult = mult; this.pow = 0; }
+        public Monomial(double mult, int pow) { this.mult = mult; this.pow = pow; }
 
-        public void TakeDerivative ()
+        public void TakeDerivative()
         {
             //Take derevative from const
             if (pow == 0)
@@ -27,7 +38,7 @@ using static Interfaces.Interfaces;
     }
 
     /// <summary>
-    /// 
+    /// Class for work with polynomial expression
     /// </summary>
     public class Polynomial
     {
@@ -36,13 +47,14 @@ using static Interfaces.Interfaces;
         public void Insert(Monomial monom)
         {
             bool enterIn = false;
-            for (int i = 0; i < expression.Count; ++i) {
+            for (int i = 0; i < expression.Count; ++i)
+            {
                 if (monom.pow == expression[i].pow)
                 {
                     expression[i].mult = monom.mult;
                     enterIn = true;
                 }
-               
+
             }
             if (enterIn == false)
             {
@@ -74,26 +86,6 @@ using static Interfaces.Interfaces;
 
             Console.WriteLine();
         }
-
-    }
-
-    internal class Program
-    {
-        static void Main(string[] args)
-        {
-            Polynomial exp = new Polynomial();
-            EnterExpression(ref exp);
-
-            exp.Show();
-            exp.TakeDerivative();
-            exp.Show();
-            exp.TakeDerivative();
-            exp.Show();
-
-            Console.WriteLine();
-        }
-
-
 
     }
 }
