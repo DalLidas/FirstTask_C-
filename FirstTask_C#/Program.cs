@@ -4,7 +4,7 @@ using System.Numerics;
 namespace FirstTask
 {
     /// <summary>
-    /// Equation of the form mult*x^pow
+    /// Class for work with equation of the form mult*x^pow
     /// </summary>
     public class Monomial
     {
