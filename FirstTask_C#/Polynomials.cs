@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace Polynomials
@@ -20,19 +21,27 @@ namespace Polynomials
         public void TakeDerivative()
         {
             //Take derevative from const
-            if (pow == 0)
+            if (this.pow == 0)
             {
-                mult = 0;
+                this.mult = 0;
                 return;
             }
 
-            mult *= pow;
-            pow -= 1;
+            this.mult *= this.pow;
+            this.pow -= 1;
+        }
+
+
+        public double Сalculate(double x)
+        {
+            return this.mult * Math.Pow(x, this.pow);
         }
 
         public void Show()
         {
-            Console.Write(mult + "*x^" + pow);
+            if(this.pow == 0) { Console.Write(this.mult ); }
+            else if (this.pow == 1) { Console.Write(this.mult + "*x"); }
+            else { Console.Write(this.mult + "*x^" + this.pow); }
         }
 
     }
@@ -44,22 +53,79 @@ namespace Polynomials
     {
         public List<Monomial> expression = new List<Monomial>();
 
+        public Polynomial()
+        {
+            expression.Add(new Monomial());
+        }
+        public Polynomial(Polynomial exp)
+        {
+            for (int i = 0; i < exp.expression.Count; ++i)
+            {
+                expression.Add(new Monomial(exp.expression[i].mult, exp.expression[i].pow));
+            }
+        }
+
+
         public void Insert(Monomial monom)
         {
             bool enterIn = false;
-            for (int i = 0; i < expression.Count; ++i)
-            {
-                if (monom.pow == expression[i].pow)
-                {
-                    expression[i].mult = monom.mult;
-                    enterIn = true;
-                }
 
+            // equal to zero monom
+            if (monom.mult == 0 && expression.Count == 1)
+            {
+                expression[0].mult = 0;
+                expression[0].pow = 0;
+                enterIn = true;
             }
+            // delete monoms with zero multiplier
+            else if (monom.mult == 0 && expression.Count > 1) 
+            {
+                for (int i = 0; i < expression.Count; ++i)
+                {
+                    if (expression[i].pow == monom.pow)
+                    {
+                        expression.RemoveAt(i);
+                        enterIn = true;
+                        break;
+                    }
+
+                }
+            }
+            // change monom multiplier with same pow
+            else
+            {
+                for (int i = 0; i < expression.Count; ++i) 
+                {
+                    if (monom.pow == expression[i].pow)
+                    {
+                        expression[i].mult = monom.mult;
+                        enterIn = true;
+                        break;
+                    }
+
+                }
+            }
+
+            // add monom with new pow
             if (enterIn == false)
             {
                 expression.Add(monom);
-            }
+
+                // delete zero
+                if (expression.Count > 1)
+                {
+                    for (int i = 0; i < expression.Count; ++i)
+                    {
+                        if (expression[i].pow == 0 && expression[i].mult == 0)
+                        {
+                            expression.RemoveAt(i);
+                            enterIn = true;
+                            break;
+                        }
+
+                    }
+                }
+            }   
         }
 
         public void TakeDerivative()
@@ -75,9 +141,22 @@ namespace Polynomials
 
         }
 
+
+        public double Сalculate(double x)
+        {
+            double y = 0;
+
+            foreach(Monomial monom in expression)
+            {
+                y += monom.Сalculate(x);
+            }
+
+            return y;
+        }
+
         public void Show()
         {
-            if (expression.Count != 0) expression[0].Show();
+            if (expression.Count != 0) { expression[0].Show(); }
             for (int i = 1; i < expression.Count; ++i)
             {
                 Console.Write(" + ");
