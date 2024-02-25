@@ -38,11 +38,38 @@ namespace Polynomials
             return this.mult * Math.Pow(x, this.pow);
         }
 
-        public void Show()
+        public void Show( bool ignoreSignFlag = false)
         {
-            if(this.pow == 0) { Console.Write(this.mult ); }
-            else if (this.pow == 1) { Console.Write(this.mult + "*x"); }
-            else { Console.Write(this.mult + "*x^" + this.pow); }
+            if (ignoreSignFlag)
+            {
+                if (this.pow == 0) { Console.Write(Math.Abs(this.mult)); }
+                else if (this.pow == 1) { Console.Write(Math.Abs(this.mult) + "*x"); }
+                else { Console.Write(Math.Abs(this.mult) + "*x^" + this.pow); }
+            }
+            else
+            {
+                if (this.pow == 0) { Console.Write(this.mult); }
+                else if (this.pow == 1) { Console.Write(this.mult + "*x"); }
+                else { Console.Write(this.mult + "*x^" + this.pow); }
+            }
+            
+        }
+
+        public String ShowInStr(bool ignoreSignFlag = false)
+        {
+            if (ignoreSignFlag)
+            { 
+                if (this.pow == 0) { return Convert.ToString(Math.Abs(this.mult)); }
+                else if (this.pow == 1) { return Convert.ToString(Math.Abs(this.mult) + "*x"); }
+                else { return Convert.ToString(Math.Abs(this.mult) + "*x^" + this.pow); }
+            }
+            else
+            {
+                if (this.pow == 0) { return Convert.ToString(this.mult); }
+                else if (this.pow == 1) { return Convert.ToString(this.mult + "*x"); }
+                else { return Convert.ToString(this.mult + "*x^" + this.pow); }
+            }
+
         }
 
     }
@@ -64,6 +91,13 @@ namespace Polynomials
             {
                 expression.Add(new Monomial(exp.expression[i].mult, exp.expression[i].pow));
             }
+        }
+
+
+        public void Clear()
+        {
+            expression.Clear();
+            expression.Add(new Monomial());
         }
 
 
@@ -158,18 +192,59 @@ namespace Polynomials
             return y;
         }
 
-        public void Show()
+        public void Show(bool ignoreSpaceFlag = false)
         {
-            if (expression.Count != 0) { expression[0].Show(); }
-            for (int i = 1; i < expression.Count; ++i)
+            if (ignoreSpaceFlag)
             {
-                if (expression[i].mult > 0) Console.Write(" + ");
-                else Console.Write(" ");
-                expression[i].Show();
+                if (expression.Count != 0) { expression[0].Show(); }
+                for (int i = 1; i < expression.Count; ++i)
+                {
+                    if (expression[i].mult > 0) Console.Write("+");
+                    else Console.Write("-");
+                    expression[i].Show(true);
+                }
             }
-
-            Console.WriteLine();
+            else
+            {
+                if (expression.Count != 0) { expression[0].Show(); }
+                for (int i = 1; i < expression.Count; ++i)
+                {
+                    if (expression[i].mult > 0) Console.Write(" + ");
+                    else Console.Write(" - ");
+                    expression[i].Show(true);
+                }
+                Console.WriteLine();
+            }
         }
 
+
+        public String ShowInStr(bool ignoreSignFlag = false)
+        {
+            String str = "";
+
+            if (ignoreSignFlag)
+            {
+                if (expression.Count != 0) { str += expression[0].ShowInStr(); }
+                for (int i = 1; i < expression.Count; ++i)
+                {
+                    if (expression[i].mult > 0) { str += "+"; }
+                    else { str += "-"; }
+                    str += expression[i].ShowInStr(true);
+                }
+            }
+            else
+            {
+                if (expression.Count != 0) { str += expression[0].ShowInStr(); }
+                for (int i = 1; i < expression.Count; ++i)
+                {
+                    if (expression[i].mult > 0) { str += " + "; }
+                    else { str += " - "; }
+                    str += expression[i].ShowInStr(true);
+                }
+                str += '\n';
+            }
+
+            return str;
+        }
     }
 }

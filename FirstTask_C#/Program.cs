@@ -10,6 +10,15 @@ using static Interfaces.Interfaces;
 namespace FirstTask {
     internal class Program
     {
+        static public void Hello()
+        {
+            String msg = "Creator: Mukhametov Danil 423 group version 3";
+            Console.SetCursorPosition((Console.WindowWidth - msg.Length) / 2, (Console.WindowHeight - 1) / 2);
+            Console.WriteLine(msg);
+            Console.ReadKey(true);
+        }
+
+
         static void Main(string[] args)
         {
             Polynomial exp = new Polynomial();
@@ -19,9 +28,13 @@ namespace FirstTask {
             double epsilon = 0.0001;
             int depth = 1000;
 
-            MainHandle(ref exp, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
+            double result = double.NaN;
 
-            Console.ReadKey();
+            Hello();
+
+            MainHandle(ref exp, ref leftBorder, ref rightBorder, ref epsilon, ref depth, ref result);
+
+            Console.ReadKey(true);
 
             return;
         }

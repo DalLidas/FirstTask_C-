@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Polynomials;
@@ -35,7 +39,6 @@ namespace Interfaces
             String menuLabel = "Expression Menu";
             String keyBinds = "F1 - ExpressionMenu, F2 - NewtonsMenu, F3 - LoadMenu, F4 - SaveMenu, Esc - Exit";
             String description = "Monomial with non-unique powers will be replaced. Zero mult delete monomial. Press ESC to stop";
-            
 
             Console.Clear();
 
@@ -81,12 +84,12 @@ namespace Interfaces
         }
 
 
-        static public void DrawLoadMenu(ref Polynomial exp)
+        static public void DrawLoadMenu(ref Polynomial exp, ref double lBorder, ref double rBorder, ref double epsilon, ref int depth)
         {
             String menuLabel = "Load Menu";
             String keyBinds = "F1 - ExpressionMenu, F2 - NewtonsMenu, F3 - LoadMenu, F4 - SaveMenu, Esc - Exit";
-            String description = " ";
-
+            String description1 = "Enter file path to load expression";
+            String description2 = "lBorder: " + Convert.ToString(lBorder) + ", rBorder: " + Convert.ToString(rBorder) + ", epsilon: " + Convert.ToString(epsilon) + ", depth: " + Convert.ToString(depth);
 
             Console.Clear();
 
@@ -98,8 +101,12 @@ namespace Interfaces
             Console.WriteLine(keyBinds);
             DrawBorder("=");
 
-            Console.SetCursorPosition((Console.WindowWidth - description.Length) / 2, 3);
-            Console.WriteLine(description);
+            Console.SetCursorPosition((Console.WindowWidth - description1.Length) / 2, 3);
+            Console.WriteLine(description1);
+            DrawBorder();
+
+            Console.SetCursorPosition((Console.WindowWidth - description2.Length) / 2, 3);
+            Console.WriteLine(description2);
             DrawBorder();
 
             exp.Show();
@@ -109,10 +116,9 @@ namespace Interfaces
 
         static public void DrawSaveMenu(ref Polynomial exp)
         {
-            String menuLabel = "SaveMenu";
+            String menuLabel = "Save Menu";
             String keyBinds = "F1 - ExpressionMenu, F2 - NewtonsMenu, F3 - LoadMenu, F4 - SaveMenu, Esc - Exit";
-            String description = " ";
-
+            String description = "Enter file path to save all data";
 
             Console.Clear();
 
@@ -133,7 +139,7 @@ namespace Interfaces
         }
 
 
-        static public void MainHandle(ref Polynomial exp, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth)
+        static public void MainHandle(ref Polynomial exp, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth, ref double result)
         {
             Modes mod = Modes.expressionIMode;
 
@@ -143,10 +149,10 @@ namespace Interfaces
                 {
                     case Modes.expressionIMode:
                         ExpressionHandle(ref exp, ref mod);
-                        break; 
+                        break;
 
                     case Modes.NewtonsCalcMode:
-                        NewtonsHandle(ref exp, ref mod, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
+                        NewtonsHandle(ref exp, ref mod, ref leftBorder, ref rightBorder, ref epsilon, ref depth, ref result);
                         break;
 
                     case Modes.loadMode:
@@ -154,7 +160,7 @@ namespace Interfaces
                         break;
 
                     case Modes.saveMode:
-                        SaveHandle(ref exp, ref mod, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
+                        SaveHandle(ref exp, ref mod, ref leftBorder, ref rightBorder, ref epsilon, ref depth, ref result);
                         break;
 
                     case Modes.exitMode:
@@ -225,20 +231,22 @@ namespace Interfaces
 
                 exp.Insert(monom);
             }
-            
+
         }
 
 
-        static public void NewtonsHandle(ref Polynomial exp, ref Modes gMod, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth)
+        static public void NewtonsHandle(ref Polynomial exp, ref Modes gMod, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth, ref double result)
         {
             String input = "";
             ConsoleKey lMod;
 
-            double result = 0;
-            bool overflowFlag = false;
+            
 
-            while(true)
+            while (true)
             {
+                result = Double.NaN;
+                bool overflowFlag = false;
+
                 DrawNewtonsMenu(ref exp, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
 
                 //leftBorder enter
@@ -265,7 +273,7 @@ namespace Interfaces
                     {
                         lMod = InputHandler(ref input, "Right border: ");
                         if (lMod != ConsoleKey.Enter) { gMod = KeyToMode(lMod); return; }
-                        if (input != "") { rightBorder = Convert.ToDouble(input); } 
+                        if (input != "") { rightBorder = Convert.ToDouble(input); }
                     }
                     catch (Exception)
                     {
@@ -314,7 +322,7 @@ namespace Interfaces
                 String errMSG = NewtonsMethodCheck(ref result, exp, leftBorder, rightBorder, epsilon);
                 if (errMSG != "")
                 {
-                    Console.WriteLine ("Error log: " + errMSG);
+                    Console.WriteLine("Error log: " + errMSG);
                     DrawBorder();
 
                     bool errIgnoreFlag = false;
@@ -354,12 +362,12 @@ namespace Interfaces
                 Console.WriteLine(@"ResultY = {0:F6}", exp.Сalculate(result));
                 DrawBorder();
 
-                // Save result
+                // Save expression
                 while (true)
                 {
                     try
                     {
-                        lMod = InputHandler(ref input, "Do you want save result? (Y/N): ");
+                        lMod = InputHandler(ref input, "Do you want save expression and conditions? (Y/N): ");
                         if (lMod != ConsoleKey.Enter) { gMod = KeyToMode(lMod); return; }
                         if (input == "Y" || input == "y") { gMod = Modes.saveMode; return; }
                         else if (input == "N" || input == "n") { break; }
@@ -370,8 +378,6 @@ namespace Interfaces
                         continue;
                     }
                 }
-
-                Console.ReadKey();
             }
         }
 
@@ -381,51 +387,171 @@ namespace Interfaces
             String input = "";
             ConsoleKey lMod;
 
-            DrawLoadMenu(ref exp);
-
-            // Depth enter
             while (true)
             {
+                DrawLoadMenu(ref exp, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
+
+                // File path enter
+                while (true)
+                {
+                    try
+                    {
+                        lMod = InputHandler(ref input, "File path: ");
+                        if (lMod != ConsoleKey.Enter) { gMod = KeyToMode(lMod); return; }
+                        if (!System.IO.File.Exists(input)) { throw new Exception("Not correct file path. Try again\n"); }
+                    }
+                    catch (Exception err)
+                    {
+                        Console.WriteLine(err.Message);
+                        continue;
+                    }
+                    break;
+                }
+
+                string[] fileData = System.IO.File.ReadAllLines(input);
                 try
                 {
-                    lMod = InputHandler(ref input, "Depth: ");
-                    if (lMod != ConsoleKey.Enter) { gMod = KeyToMode(lMod); return; }
-                    //if (input != "") { depth = Convert.ToInt32(input); }
+                    // Read Polynomials from file
+                    if (!PolynomialReader(fileData[0], ref exp))
+                    {
+                        Console.WriteLine("Not correct file data. Try again\n");
+                        continue;
+                    }
+
+                    leftBorder = Convert.ToDouble(fileData[1]);
+                    rightBorder = Convert.ToDouble(fileData[2]);
+                    epsilon = Convert.ToDouble(fileData[3]);
+                    depth = Convert.ToInt32(fileData[4]);
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine("Not a double number. Try again\n");
                     continue;
                 }
-                break;
             }
         }
 
+        static public bool PolynomialReader(String str, ref Polynomial exp)
+        {
+            int i = 0;
+            bool negativeMonomFlag = false;
+            if (str[i] == '-') { negativeMonomFlag = true; ++i; }
 
-        static public void SaveHandle(ref Polynomial exp, ref Modes gMod, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth)
+            exp.Clear();
+
+            while (i < str.Length) {
+                try
+                {
+                    Monomial monom = new Monomial();
+                    String buff = "";
+
+                    // Read mult
+                    while (str[i] != '*')
+                    {
+                        buff += str[i];
+                        ++i;
+                    }
+
+                    if (negativeMonomFlag) { monom.mult = -Convert.ToDouble(buff); }
+                    else { monom.mult = Convert.ToDouble(buff); }
+                    buff = "";
+                    ++i;
+
+                    if (str[i++] != 'x') { throw new Exception(); }
+                    if (str[i++] != '^') { throw new Exception(); }
+
+                    // Read pow
+                    while (i!= str.Length && str[i] != '-' && str[i] != '+' && str[i] != '\n')
+                    {
+                        buff += str[i];
+                        ++i;
+                    }
+
+                    // Sign check
+                    if (i != str.Length)
+                    {
+                        if (str[i] == '-') { negativeMonomFlag = true; ++i; }
+                        else if (str[i] == '+') { negativeMonomFlag = false; ++i; }
+                        else if (str[i] == '\n') { break; }
+                    }
+                   
+                    monom.pow = Convert.ToInt32(buff);
+                    exp.Insert(monom);
+                }
+                catch (Exception)
+                {
+                    exp.Clear();
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+        static public void SaveHandle(ref Polynomial exp, ref Modes gMod, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth, ref double result)
         {
             String input = "";
             ConsoleKey lMod;
 
-            DrawSaveMenu(ref exp);
-
-            // Depth enter
             while (true)
             {
+                DrawSaveMenu(ref exp);
+
+                // File path enter
+                while (true)
+                {
+                    try
+                    {
+                        lMod = InputHandler(ref input, "File path: ");
+                        if (lMod != ConsoleKey.Enter) { gMod = KeyToMode(lMod); return; }
+                        if (System.IO.File.Exists(input)) { throw new Exception("File alredy exist. Try again\n"); }
+                        if (!MaskFit(input)) { throw new Exception("Not correct file path. Try again\n"); }
+                    }
+                    catch (Exception err)
+                    {
+                        Console.WriteLine(err.Message);
+                        continue;
+                    }
+                    break;
+                }
+
                 try
                 {
-                    lMod = InputHandler(ref input, "Depth: ");
-                    if (lMod != ConsoleKey.Enter) { gMod = KeyToMode(lMod); return; }
-                    //if (input != "") { depth = Convert.ToInt32(input); }
+                    using (System.IO.StreamWriter fileStream = new System.IO.StreamWriter(input))
+                    {
+                        fileStream.WriteLine(exp.ShowInStr(true));
+                        fileStream.WriteLine(leftBorder);
+                        fileStream.WriteLine(rightBorder);
+                        fileStream.WriteLine(epsilon);
+                        fileStream.WriteLine(depth);
+                        if (!Double.IsNaN(result))
+                        {
+                            fileStream.WriteLine("=================================");
+                            fileStream.WriteLine("ResultX: " + result);
+                            fileStream.WriteLine("ResultY: " + exp.Сalculate(result));
+                        }
+                    }
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine("Not a double number. Try again\n");
+                    Console.WriteLine("Error while write to file. Try again\n");
                     continue;
                 }
-                break;
+
+
+                Console.WriteLine("All data saved");
+                Console.ReadKey(true);
             }
         }
+
+
+        static public bool MaskFit(string filePath)
+        {
+            Regex mask = new Regex("((/./)?([cC][oO][nN]))|((/./)?([cC][oO][nN]\\.))|((/./)?([cC][oO][nN]\\.)(.*))");
+
+            return !mask.IsMatch(filePath);
+        }
+
 
         static public ConsoleKey InputHandler(ref String output, String msg = "")
         {
@@ -471,56 +597,5 @@ namespace Interfaces
                 }
             }
         }
-
-
-        static public double EnterDouble(String msg = "")
-        {
-            double num = double.NaN;
-
-            while (true)
-            {
-                try
-                {
-                    Console.Write(msg);
-                    num = Convert.ToDouble(Console.ReadLine());
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("Not a double number. Try again\n");
-                    continue;
-                }
-                break;
-            }
-
-
-            return num;
-        }
-
-
-        static public double EnterInt(String msg = "")
-        {
-            double num = double.NaN;
-
-            while (true)
-            {
-                try
-                {
-                    Console.Write(msg);
-                    num = Convert.ToInt32(Console.ReadLine());
-                }
-                catch (Exception)
-                {
-                    Console.WriteLine("Not a int number. Try again\n");
-                    continue;
-                }
-                break;
-            }
-
-
-            return num;
-        }
-
     }
-
-
 }
