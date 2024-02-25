@@ -34,9 +34,8 @@ namespace Interfaces
         {
             String menuLabel = "Expression Menu";
             String keyBinds = "F1 - ExpressionMenu, F2 - NewtonsMenu, F3 - LoadMenu, F4 - SaveMenu, Esc - Exit";
-            String description = "Monomial with non-unique powers will be replaced. Press ESC to stop";
+            String description = "Monomial with non-unique powers will be replaced. Zero mult delete monomial. Press ESC to stop";
             
-
 
             Console.Clear();
 
@@ -57,7 +56,7 @@ namespace Interfaces
         }
 
 
-        static public void DrawNewtonsMenu(ref Polynomial exp, double lBorder, double rBorder, double epsilon, double depth)
+        static public void DrawNewtonsMenu(ref Polynomial exp, ref double lBorder, ref double rBorder, ref double epsilon, ref int depth)
         {
             String menuLabel = "Newtons Menu";
             String keyBinds = "F1 - ExpressionMenu, F2 - NewtonsMenu, F3 - LoadMenu, F4 - SaveMenu, Esc - Exit";
@@ -134,7 +133,7 @@ namespace Interfaces
         }
 
 
-        static public void MainHandle(ref Polynomial exp)
+        static public void MainHandle(ref Polynomial exp, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth)
         {
             Modes mod = Modes.expressionIMode;
 
@@ -147,15 +146,15 @@ namespace Interfaces
                         break; 
 
                     case Modes.NewtonsCalcMode:
-                        NewtonsHandle(ref exp, ref mod);
+                        NewtonsHandle(ref exp, ref mod, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
                         break;
 
                     case Modes.loadMode:
-                        LoadHandle(ref exp, ref mod);
+                        LoadHandle(ref exp, ref mod, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
                         break;
 
                     case Modes.saveMode:
-                        SaveHandle(ref exp, ref mod);
+                        SaveHandle(ref exp, ref mod, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
                         break;
 
                     case Modes.exitMode:
@@ -230,22 +229,17 @@ namespace Interfaces
         }
 
 
-        static public void NewtonsHandle(ref Polynomial exp, ref Modes gMod)
+        static public void NewtonsHandle(ref Polynomial exp, ref Modes gMod, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth)
         {
             String input = "";
             ConsoleKey lMod;
 
-            double leftBorder = -10;
-            double rightBorder = 10;
-            double epsilon = 0.0001;
-            int depth = 1000;
-
             double result = 0;
-            bool correctResultFlag = false;
+            bool overflowFlag = false;
 
             while(true)
             {
-                DrawNewtonsMenu(ref exp, leftBorder, rightBorder, epsilon, depth);
+                DrawNewtonsMenu(ref exp, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
 
                 //leftBorder enter
                 while (true)
@@ -315,30 +309,74 @@ namespace Interfaces
                     break;
                 }
 
+                // Newtons method check
+                DrawBorder();
+                String errMSG = NewtonsMethodCheck(ref result, exp, leftBorder, rightBorder, epsilon);
+                if (errMSG != "")
+                {
+                    Console.WriteLine ("Error log: " + errMSG);
+                    DrawBorder();
+
+                    bool errIgnoreFlag = false;
+
+                    while (true)
+                    {
+                        try
+                        {
+                            lMod = InputHandler(ref input, "Do you want continue? (Y/N): ");
+                            if (lMod != ConsoleKey.Enter) { gMod = KeyToMode(lMod); return; }
+                            if (input == "Y" || input == "y") { errIgnoreFlag = true; }
+                            else if (input == "N" || input == "n") { errIgnoreFlag = false; }
+                            else { continue; }
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
+                        break;
+                    }
+
+                    if (errIgnoreFlag == false)
+                    {
+                        continue;
+                    }
+                }
+
+                // Newtons method
+                overflowFlag = NewtonsMethod(ref result, exp, leftBorder, rightBorder, epsilon, depth);
+
+                DrawBorder();
+                if (overflowFlag)
+                {
+                    Console.WriteLine("Newtons method overflow depth counter");
+                }
+                Console.WriteLine(@"ResultX = {0:F6}", result);
+                Console.WriteLine(@"ResultY = {0:F6}", exp.Сalculate(result));
                 DrawBorder();
 
-                correctResultFlag = NewtonsMethod(ref result, exp, leftBorder, rightBorder, epsilon, depth);
-
-                DrawBorder();
-
-                if (correctResultFlag)
+                // Save result
+                while (true)
                 {
-                    Console.WriteLine(@"ResultX = {0}", result);
+                    try
+                    {
+                        lMod = InputHandler(ref input, "Do you want save result? (Y/N): ");
+                        if (lMod != ConsoleKey.Enter) { gMod = KeyToMode(lMod); return; }
+                        if (input == "Y" || input == "y") { gMod = Modes.saveMode; return; }
+                        else if (input == "N" || input == "n") { break; }
+                        else { continue; }
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
                 }
-                else
-                {
-                    Console.WriteLine(@"Uncorrect resultX = {0}", result);
-                }
-
-                Console.WriteLine(@"ResultY = {0}", exp.Сalculate(result));
-            
 
                 Console.ReadKey();
             }
         }
 
 
-        static public void LoadHandle(ref Polynomial exp, ref Modes gMod)
+        static public void LoadHandle(ref Polynomial exp, ref Modes gMod, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth)
         {
             String input = "";
             ConsoleKey lMod;
@@ -364,7 +402,7 @@ namespace Interfaces
         }
 
 
-        static public void SaveHandle(ref Polynomial exp, ref Modes gMod)
+        static public void SaveHandle(ref Polynomial exp, ref Modes gMod, ref double leftBorder, ref double rightBorder, ref double epsilon, ref int depth)
         {
             String input = "";
             ConsoleKey lMod;

@@ -10,32 +10,109 @@ namespace NewtonsAlgorithm
 {
     internal class NewtonsAlgorithm
     {
+        static public String NewtonsMethodCheck(ref double result, Polynomial exp, double a, double b, double epsilon)
+        {
+            String errMsg = "";
+            double iterator = 0;
+
+            Polynomial buff = new Polynomial(exp);
+
+            // error if expression dont cross zero 
+            if (exp.Сalculate(a) * exp.Сalculate(b) > 0)
+            {
+                errMsg += "Expression dont cross zero. ";
+            }
+
+            // error if first derivative dont save sign
+            buff.TakeDerivative();
+
+            iterator = a;
+            if (buff.Сalculate(iterator) > 0)
+            {
+                while (iterator < b)
+                {
+                    if (buff.Сalculate(iterator) <= 0)
+                    {
+                        errMsg += "First derivative cross zero and dont save sign. ";
+                        break;
+                    }
+                    iterator += epsilon;
+                }
+            }
+            else
+            {
+                while (iterator < b)
+                {
+                    if (buff.Сalculate(iterator) >= 0)
+                    {
+                        errMsg += "First derivative cross zero and dont save sign. ";
+                        break;
+                    }
+                    iterator += epsilon;
+                }
+            }
+
+
+            // error if second derivative dont save sign
+            buff.TakeDerivative();
+
+            iterator = a;
+            if (buff.Сalculate(iterator) > 0)
+            {
+                while (iterator < b)
+                {
+                    if (buff.Сalculate(iterator) <= 0)
+                    {
+                        errMsg += "Second derivative cross zero and dont save sign. ";
+                        break;
+                    }
+                    iterator += epsilon;
+                }
+            }
+            else
+            {
+                while (iterator < b)
+                {
+                    if (buff.Сalculate(iterator) >= 0)
+                    {
+                        errMsg += "Second derivative cross zero and dont save sign. ";
+                        break;
+                    }
+                    iterator += epsilon;
+                }
+            }
+
+
+            return errMsg;
+        }
+
+
         static public bool NewtonsMethod(ref double result, Polynomial exp, double a, double b, double epsilon, int depth)
         {
-            Console.Write("expression: ");
-            exp.Show();
-
             Polynomial deriv1 = new Polynomial(exp);
 
             deriv1.TakeDerivative();
-            Console.Write("derivative: ");
-            deriv1.Show();
 
-            double x0 = (a + b) / 2;
-            Console.Write("x0: ");
-            Console.WriteLine(x0);
+            Polynomial deriv2 = new Polynomial(deriv1);
 
-            double x1 = 0;
+            deriv2.TakeDerivative();
 
-            if (EqualZero(deriv1.Сalculate(x0), epsilon)) { x1 = x0 - epsilon;} 
-            else { x1 = x0 - (exp.Сalculate(x0) / deriv1.Сalculate(x0)); }
+            // Calc x0
+            double x0 = (a + b)/2;
 
-            Console.Write("x1: ");
-            Console.WriteLine(x1);
+            if (exp.Сalculate(a) * deriv2.Сalculate(a) > 0)
+            {
+                x0 = a;
+            }
+            else if(exp.Сalculate(b) * deriv2.Сalculate(b) > 0)
+            {
+                x0 = b;
+            }
 
+            double x1 = x0 - (exp.Сalculate(x0) / deriv1.Сalculate(x0));
             int i = 0;
 
-
+            
             while (true)
             {
                 if (++i > depth) break;
@@ -43,17 +120,17 @@ namespace NewtonsAlgorithm
                 if (Math.Abs(x1 - x0) < epsilon)
                 {
                     result = x1;
-                    return true;
+                    return false;
                 }
                     
                 x0 = x1;
-                if (EqualZero(deriv1.Сalculate(x0), epsilon)) { x1 = x0 - epsilon; }
+                if (deriv1.Сalculate(x0) == 0) { x1 = x0 - epsilon; }
                 else { x1 = x0 - (exp.Сalculate(x0) / deriv1.Сalculate(x0)); }
             }
 
-            // Exit if depth counter overflow
+            // Exit if depth counter overflow and set overflow flag
             result = x1;
-            return false;
+            return true;
         }
 
         static public bool EqualZero(double num, double epsilon)

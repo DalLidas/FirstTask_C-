@@ -17,6 +17,7 @@ namespace Polynomials
         public Monomial() { this.mult = 0; this.pow = 0; }
         public Monomial(double mult) { this.mult = mult; this.pow = 0; }
         public Monomial(double mult, int pow) { this.mult = mult; this.pow = pow; }
+        public Monomial(Monomial monom) { this.mult = monom.mult; this.pow = monom.pow; }
 
         public void TakeDerivative()
         {
@@ -136,7 +137,10 @@ namespace Polynomials
                 {
                     expression.RemoveAt(i);
                 }
-                expression[i].TakeDerivative();
+                else
+                {
+                    expression[i].TakeDerivative();
+                }
             }
 
         }
@@ -159,7 +163,8 @@ namespace Polynomials
             if (expression.Count != 0) { expression[0].Show(); }
             for (int i = 1; i < expression.Count; ++i)
             {
-                Console.Write(" + ");
+                if (expression[i].mult > 0) Console.Write(" + ");
+                else Console.Write(" ");
                 expression[i].Show();
             }
 

@@ -14,7 +14,12 @@ namespace FirstTask {
         {
             Polynomial exp = new Polynomial();
 
-            MainHandle(ref exp);
+            double leftBorder = -10;
+            double rightBorder = 10;
+            double epsilon = 0.0001;
+            int depth = 1000;
+
+            MainHandle(ref exp, ref leftBorder, ref rightBorder, ref epsilon, ref depth);
 
             Console.ReadKey();
 
